@@ -1,7 +1,7 @@
 /// @dev We only need to worry about a single function, so we can
 /// avoid worrying about the selector.
 #define macro MAIN() = {
-    DO_THE_THING_PC(0x04)
+    DO_THE_THING(0x04)
     DO_THE_THING(0x24)
     DO_THE_THING(0x44)
     DO_THE_THING(0x64)
@@ -14,31 +14,15 @@
 #define macro DO_THE_THING(ptr) = returns (1) {
     <ptr> calldataload          // [arr[0]]
     BRANCHLESS_SQRT()           // [sqrt(fixed18)]
-    0x3B9ACA00 mul              // [sqrt(fixed18) * 1e9, x]
+    0x1dcd6500 mul              // [sqrt(fixed18) * 1e9, x]
     msize mstore                // [x]
 }
 
-/// @dev This leaves `x` on the stack, but we can ignore that value
-#define macro DO_THE_THING_PC(ptr) = returns (1) {
-    <ptr> calldataload          // [arr[0]]
-    BRANCHLESS_SQRT_PC()        // [sqrt(fixed18)]
-    0x3B9ACA00 mul              // [sqrt(fixed18) * 1e9, x]
-    msize mstore                // [x]
-}
-
-/// https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol#L328
+/// https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol#L443
 #define macro BRANCHLESS_SQRT() = takes (1) returns (2) {
     // Input stack:                [x]
 
-    0xb5000000                  // [z, x]
-    0x30                        // [r, z, x]
-
-    dup3 shr                    // [r >> x, z, x]
-    0x010000 add                // [(r >> x) + 0x10000, z, x]
-    mul 0x12 shr                // [z, x]
-
-    // Given the worst case multiplicative error of 2.84, 5 iterations should be enough
-    // for this case. Solady uses 7, but 5 almost always works for the sake of this challenge.
+    0xa5000000                  // [z, x]
     dup1 dup3 div               // [x / z, z, x]
     add                         // [x / z + z, x]
     chainid shr                 // [z, x]
@@ -47,44 +31,6 @@
     chainid shr                 // [z, x]
     dup1 dup3 div               // [x / z, z, x]
     add                         // [x / z + z, x]
-    chainid shr                 // [z, x]
-    dup1 dup3 div               // [x / z, z, x]
-    add                         // [x / z + z, x]
-    chainid shr                 // [z, x]
-    dup1 dup3 div               // [x / z, z, x]
-    add                         // [x / z + z, x]
-    chainid shr                 // [z, x]
-
-    // Return stack:               [result, x]
-}
-
-/// https://github.com/Vectorized/solady/blob/main/src/utils/FixedPointMathLib.sol#L328
-/// This is a variation of the `BRANCHLESS_SQRT` macro that uses the `pc` opcode to
-/// push `0x12` to the stack, as well as omit a third correction iteration.
-#define macro BRANCHLESS_SQRT_PC() = takes (1) returns (2) {
-    // Input stack:                [x]
-
-    0xb5000000                  // [z, x]
-    0x30                        // [r, z, x]
-
-    dup3 shr                    // [r >> x, z, x]
-    0x010000 add                // [(r >> x) + 0x10000, z, x]
-    mul pc shr                  // [z, x]
-
-    // Given the worst case multiplicative error of 2.84, 5 iterations should be enough
-    // for this case. Solady uses 7, but 4 almost always works for the sake of this challenge.
-    dup1 dup3 div               // [x / z, z, x]
-    add                         // [x / z + z, x]
-    chainid shr                 // [z, x]
-    dup1 dup3 div               // [x / z, z, x]
-    add                         // [x / z + z, x]
-    chainid shr                 // [z, x]
-    dup1 dup3 div               // [x / z, z, x]
-    add                         // [x / z + z, x]
-    chainid shr                 // [z, x]
-    dup1 dup3 div               // [x / z, z, x]
-    add                         // [x / z + z, x]
-    chainid shr                 // [z, x]
 
     // Return stack:               [result, x]
 }
