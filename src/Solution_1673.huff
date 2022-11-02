@@ -1,0 +1,25 @@
+#define macro MAIN() = takes (0) returns (0) {
+    0x3ffff                             // [mask]
+
+    0x400000 balance dup1 dup1          // [b, b, b, mask]
+
+    0x24 shr                            // [b>>0x24, b, b, mask]
+    pc shl msize mstore                 // [b, b, mask] 
+
+    pc shr                              // [b>>0x12(pc), b, mask]
+    dup3 and                            // [(b>>0x12) & mask, b, mask]
+    0xe shl msize mstore                // [b, mask]
+
+    dup2 and                            // [b & mask, mask]
+    0xe shl msize mstore                // [mask]
+
+    selfbalance dup1                    // [b, b, mask]
+    0x10 shr                            // [b>>0x10, b, mask]
+    msize mstore                        // [b, mask]
+
+    and                                 // [b & mask]
+    0xe shl msize mstore                // []
+
+    msize 0x04 return
+}
+
